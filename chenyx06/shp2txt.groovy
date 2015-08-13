@@ -14,7 +14,7 @@ shp.getFeatures().each() { dreiecke
   def nummer = it.nummer
 
   def dreieck = [:]
-  dreieck.put('nummer', it.nummer)
+  dreieck.put('nummer', nummer)
   dreieck.put('wkt_lv03', wkt)
 
   dreiecke[nummer] = dreieck
