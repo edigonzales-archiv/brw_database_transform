@@ -16,6 +16,10 @@ class Main {
 		def dbusr = "stefan"
 		def dbpwd = "ziegler12"
 		
+		def tables = []
+		def whitelist = []
+		def blacklist = []
+		
 		// program parameters
 		def cli = new CliBuilder(
 			usage: 'java -jar XYZ.jar',
@@ -57,10 +61,46 @@ class Main {
 		dbparams['dbusr'] = dbusr
 		dbparams['dbpwd'] = dbpwd
 		
-		// ...
+		// Behaviour: 
+		// dbschema = 'all': Transform all tables except blacklisted ones.
+		// dbschema = 'some valid schema': Transform this schema AND the whitelisted ones except the blacklisted ones.
+		// dbschema NOT set at all: Transform only whitelisted tables. 
 		def pg = new PostgresqlDatabase(dbparams)
-		pg.fubar()
-	
+		
+		if (options.white) {
+			whitelist = Utils.readBlackOrWhiteListFile(options.white)
+		}
+		
+		if (options.black) {
+			blacklist = Utils.readBlackOrWhiteListFile(options.black)
+		}
+		
+		if (options.dbschema == 'all') {
+			tables = pg.getUserTables()		
+		} else if (options.dbschema) {
+			tables = pg.getUserTables(options.dbschema)
+			tables.addAll(whitelist)
+		} else {
+			tables.addAll(whitelist)
+		}
+		
+		// Remove the blacklisted tables.
+		tables.removeAll(blacklist)
+		
+		log.debug "Tables to transform: " + tables
+
+		// Transform the tables.
+		pg.transform(tables)
+		
+		
+//		def freeframe = new FreeFrame()
+
+		
+		
+		
+		
+		
+		
 		
 		println "Hallo Welt."
 	}

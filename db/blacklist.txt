@@ -1,0 +1,2 @@
+fubar3.bezirksgrenzen_bezirksgrenzabschnitt
+fubar3.bodenbedeckung_bbnachfuehrung
