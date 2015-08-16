@@ -85,7 +85,7 @@ AND table_schema NOT ILIKE 'pg_%'
 		return tables
 	}
 	
-	public void transform(List tables) {
+	public void prepareList(List tableNames) {
 		
 		// If Postgis Version is < 2.0 we need to take of of CHECK constraints: 
 		// (st_srid(.....) = -1))
@@ -120,7 +120,10 @@ AND table_schema NOT ILIKE 'pg_%'
 		
 		// Remember, remember: a table can have multiple geometry columns...
 		
-		tables.each { tableName ->
+		
+		def tranformableTables = [:]
+		
+		tableNames.each { tableName ->
 			
 			log.debug "****** ${tableName} ******"
 			
@@ -128,24 +131,40 @@ AND table_schema NOT ILIKE 'pg_%'
 			
 			if (columns.size() == 0) {
 				log.debug "This table has no geometry columns"
-			}
-		
+				return
+			}			
+			
+			// Loop through every column of this table.
+			def tables = []
 			columns.each { columnName, dataType ->
 				log.debug "Do we need to transform geometry column: '${columnName}'?"
 				
+				// Check if we need to transform this geometry.
+				// Sometimes we need some fuzzy logic to figure it out.
+				// See below.
 				def transformableGeometry =  hasTransformableGeometry(tableName, columnName)
 				
 				if (transformableGeometry) {
 					log.debug "Yes!"
+					
+					
+					// TODO: Check for check constraints...
+					
+					def table = [:]
+					table['schema_name'] = tableName.tokenize('.')[0]
+					table['table_name'] = tableName.tokenize('.')[1]
+					table['geometry_column'] = columnName
+					tables << table
+
 				} else {
 					log.debug "No!"
 				}
 				
-//				logger.info "We do not transform this geometry: ${columnName} - ${tableName}"
-				
-				
 			}
+			tranformableTables[tableName] = tables // TODO: Test if this is empty when there is no geometry columns.
 		}
+		
+		log.debug "These are the tables (geometry_columns) we need to transform: " + tranformableTables
 	}
 	
 	/**

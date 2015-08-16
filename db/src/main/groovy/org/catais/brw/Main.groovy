@@ -87,13 +87,13 @@ class Main {
 		// Remove the blacklisted tables.
 		tables.removeAll(blacklist)
 		
-		log.debug "Tables to transform: " + tables
+		log.debug "(Brutto) Tables to transform: " + tables
 
 		// Transform the tables.
-		pg.transform(tables)
+//		pg.prepareList(tables)
 		
 		
-//		def freeframe = new FreeFrame()
+		def freeframe = new FreeFrame()
 
 		
 		
