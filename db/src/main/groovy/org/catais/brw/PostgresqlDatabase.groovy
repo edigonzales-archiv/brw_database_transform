@@ -23,15 +23,6 @@ class PostgresqlDatabase {
 	def dbpwd
 	def dburl
 	
-	def queryUserTables = '''\
-SELECT * 
-FROM information_schema.tables 
-WHERE table_type = 'BASE TABLE'
-AND table_schema NOT IN ('information_schema') 
-AND table_schema NOT ILIKE 'pg_%'
-'''
-
-	
 	// This is only needed because of the dburl variable. Without it,
 	// we could use the standard map constructor.
 	public PostgresqlDatabase(Map dbparams) {
@@ -61,18 +52,26 @@ AND table_schema NOT ILIKE 'pg_%'
 	 * @return List of all 'user' tables in the dbschema.
 	 */
 	public List getUserTables(String dbschema) {
+		def query = '''\
+SELECT * 
+FROM information_schema.tables 
+WHERE table_type = 'BASE TABLE'
+AND table_schema NOT IN ('information_schema') 
+AND table_schema NOT ILIKE 'pg_%'
+'''
+	
 		if (dbschema) {
-			queryUserTables = queryUserTables + "AND table_schema = '$dbschema'\n" // Why do I not need ${Sql.expand(dbschema)}?
+			query = query + "AND table_schema = '$dbschema'\n" // Why do I not need ${Sql.expand(dbschema)}?
 		}
 		
-		queryUserTables = queryUserTables + "ORDER BY table_schema, table_name;"
+		query = query + "ORDER BY table_schema, table_name;"
 		
 		def tables = []
 		
 		def sql = Sql.newInstance(dburl)
 
 		try {
-			sql.eachRow(queryUserTables) {row ->
+			sql.eachRow(query) {row ->
 				tables << row.table_schema + "." + row.table_name
 			}
 		} catch (SQLException e) {
@@ -193,7 +192,7 @@ LIMIT 1;
 	}
 	
 	/**
-	 * Figures out all the geometry columns of the table.
+	 * Figures out all the geometry columns of a table.
 	 * 
 	 * @param tableName
 	 * @return Map (column name : data type) with all geometry columns of the table. 
